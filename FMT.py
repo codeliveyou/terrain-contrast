@@ -9,12 +9,20 @@ def show_image(image):
     plt.colorbar()
     plt.show()
 
+def show_mask(mask):
+    if mask is not None:
+        cv2.imshow("Mask", mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
 def fourier_mellin_transform(image, mask = None):
     # Convert to grayscale
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     if mask is not None:
+        # show_image(image_gray)
         image_gray = cv2.bitwise_and(image_gray, image_gray, mask=mask)
+        # show_image(image_gray)
 
     # Log-Polar Transform
     flags = cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_POLAR_LOG
@@ -33,14 +41,14 @@ def fourier_mellin_transform(image, mask = None):
 def create_mask(image):
     # Assuming erased parts are black or a specific color, adjust the threshold accordingly
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, mask = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY)  # Threshold needs to be adjusted based on the image
+    _, mask = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY_INV)  # Threshold needs to be adjusted based on the image
     return mask
 
 
-def compare_images_fft(imageA, imageB):
+def compare_images_fft(imageA, imageB, mask = None):
     
     fA = fourier_mellin_transform(imageA)
-    fB = fourier_mellin_transform(imageB)
+    fB = fourier_mellin_transform(imageB, mask)
 
     
     fA /= np.std(fA).sum()
@@ -55,9 +63,11 @@ def compare_images_fft(imageA, imageB):
     return max_correlation
 
 
-def calculate_rotation(imageA, imageB):
+
+
+def calculate_rotation(imageA, imageB, mask = None):
     fA = fourier_mellin_transform(imageA)
-    fB = fourier_mellin_transform(imageB)
+    fB = fourier_mellin_transform(imageB, mask)
 
     fA /= np.std(fA).sum()
     fB /= np.std(fB).sum()
@@ -76,15 +86,16 @@ def calculate_rotation(imageA, imageB):
 def add_erased_part(image):
     height = image.shape[0]
     width = image.shape[1]
+    random.seed(513)
     for _ in range(5):
-        h = random.randint(5, 15)
-        w = random.randint(5, 15)
+        h = random.randint(5, 25)
+        w = random.randint(5, 45)
         x = random.randint(0, height - h)
         y = random.randint(0, width - w)
         image[x : x + h, y : y + w] = 255
     return image
 
-def max_correlation(imageA, imageB):
+def max_correlation(imageA, imageB, mask = None):
     max_score = 0
     height_A = imageA.shape[0]
     width_A = imageA.shape[1]
@@ -92,7 +103,7 @@ def max_correlation(imageA, imageB):
     height_B = imageB.shape[0]
     width_B = imageB.shape[1]
 
-    show_image(imageB)
+    # show_image(imageB)
 
     # imageB = cv2.multiply(imageB, 2)
 
@@ -101,7 +112,7 @@ def max_correlation(imageA, imageB):
 
     for coner_X in range(0, height_A - height_B + 1, 10):
         for coner_Y in range(0, width_A - width_B + 1, 10):
-            current_correlation = compare_images_fft(imageA[coner_X : coner_X + height_B, coner_Y : coner_Y + width_B], imageB)
+            current_correlation = compare_images_fft(imageA[coner_X : coner_X + height_B, coner_Y : coner_Y + width_B], imageB, mask)
             # print(current_correlation)
             # print(current_correlation)
             if current_correlation > max_score:
@@ -127,23 +138,12 @@ imageA = cv2.imread('A.jpg')
 imageB = cv2.imread('C.jpg')
 
 imageB = add_erased_part(imageB)
-show_image(imageB)
-maskB = create_mask(imageB)
-print(maskB)
 
-# print(compare_images_fft(imageA, imageB))
-
-
-print(max_correlation(imageA, imageB))
+mask = create_mask(imageB)
+# mask = None
+# show_mask(mask)
 
 
+print(max_correlation(imageA, imageB, mask))
 
-# log_polar_image = cv2.warpPolar(cv2.cvtColor(imageA, cv2.COLOR_BGR2GRAY), (imageA.shape[0], imageA.shape[1]),
-#                                 (imageA.shape[0]//2, imageA.shape[1]//2), 60,
-#                                 cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_POLAR_LOG)
-# show_image(log_polar_image)
 
-# f_transform = np.fft.fft2(log_polar_image)
-# f_transform_shifted = np.fft.fftshift(f_transform)
-# magnitude_spectrum = 20 * np.log(np.abs(f_transform_shifted))
-# show_image(magnitude_spectrum)
