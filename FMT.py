@@ -9,9 +9,13 @@ def show_image(image):
     plt.colorbar()
     plt.show()
 
-def fourier_mellin_transform(image):
+def fourier_mellin_transform(image, mask = None):
     # Convert to grayscale
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    if mask is not None:
+        image_gray = cv2.bitwise_and(image_gray, image_gray, mask=mask)
+
     # Log-Polar Transform
     flags = cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_POLAR_LOG
     log_polar_image = cv2.warpPolar(image_gray, (image_gray.shape[0], image_gray.shape[1]), 
@@ -25,6 +29,12 @@ def fourier_mellin_transform(image):
     
     f = np.fft.fft2(log_polar_image)
     return f
+
+def create_mask(image):
+    # Assuming erased parts are black or a specific color, adjust the threshold accordingly
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY)  # Threshold needs to be adjusted based on the image
+    return mask
 
 
 def compare_images_fft(imageA, imageB):
@@ -63,6 +73,16 @@ def calculate_rotation(imageA, imageB):
 
     return rotation_angle
 
+def add_erased_part(image):
+    height = image.shape[0]
+    width = image.shape[1]
+    for _ in range(5):
+        h = random.randint(5, 15)
+        w = random.randint(5, 15)
+        x = random.randint(0, height - h)
+        y = random.randint(0, width - w)
+        image[x : x + h, y : y + w] = 255
+    return image
 
 def max_correlation(imageA, imageB):
     max_score = 0
@@ -75,24 +95,6 @@ def max_correlation(imageA, imageB):
     show_image(imageB)
 
     # imageB = cv2.multiply(imageB, 2)
-
-    print(height_B, width_B)
-        
-
-    for _ in range(5):
-        h = random.randint(5, 15)
-        w = random.randint(5, 15)
-        x = random.randint(0, height_B - h)
-        y = random.randint(0, width_B - w)
-        imageB[x : x + h, y : y + w] = 255
-
-    print(imageB.shape)
-
-    show_image(imageB)
-
-
-    # print(imageB.shape)
-    # return 0
 
     target_X = 0
     target_Y = 0
@@ -123,6 +125,11 @@ def max_correlation(imageA, imageB):
 # Load images
 imageA = cv2.imread('A.jpg')
 imageB = cv2.imread('C.jpg')
+
+imageB = add_erased_part(imageB)
+show_image(imageB)
+maskB = create_mask(imageB)
+print(maskB)
 
 # print(compare_images_fft(imageA, imageB))
 
