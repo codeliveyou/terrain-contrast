@@ -1,55 +1,15 @@
 from PIL import Image
-import numpy as np
-import pyvista as pv
-import open3d as o3d
 
-def get_mesh(data):
-    points = np.array(data)
-
-    print(points.shape)
-
-    
-    point_cloud = pv.PolyData(points)
-
-    
-    surface = point_cloud.delaunay_2d()
-
-    
-    surface.plot(show_edges=True)
+from get_mesh import *
 
 
-def get_mesh2(data):
-    points = np.array(data)
-
-    
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-
-    pcd.estimate_normals(
-        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=5, max_nn=30)
-    )
-
-    mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=9)
-
-    o3d.visualization.draw_geometries([mesh])
-
-    def filter_mesh_by_density(mesh, densities, density_threshold=0.01):
-        vertices_to_remove = densities < np.quantile(densities, density_threshold)
-        mesh.remove_vertices_by_mask(vertices_to_remove)
-        return mesh
-
-    filtered_mesh = filter_mesh_by_density(mesh, densities, 0.01)
-
-    o3d.visualization.draw_geometries([filtered_mesh])
-
-
-def convert_data_into_grayimage(total_data):
+def convert_data_into_grayimage(total_data, height, width):
     # total_data = [(int(y) for y in x.split(' ')) for x in total_data.split("\n")]
 
     data = []
     for x in total_data.split("\n"):
         if len(x) < 1:
-            break
+            continue
         temp_array = []
         for y in x.split('	'):
             if len(y) > 0 and y != 'T':
@@ -57,27 +17,24 @@ def convert_data_into_grayimage(total_data):
         # temp_array.append(len(data))
         data.append(temp_array.copy())
 
-    # get_mesh(data)
-
-    data = sorted(data, key = lambda x : x[2])
-
-    mn_height = data[0][2]
-    mx_height = data[-1][2]
-
     data = sorted(data, key = lambda x : x[0])
 
     final_data = []
-    for i in range(100):
-        temp_array = sorted(data[i * 100 : (i + 1) * 100], key = lambda x : x[1])
+    for i in range(width):
+        temp_array = sorted(data[i * 100 : (i + 1) * width], key = lambda x : x[1])
         final_data.append([y[2] for y in temp_array])
     
     return final_data
 
-def value_to_color(value):
+def value_to_color(value, min_height, max_height):
     return (max_height - value) / (max_height - min_height)
 
-f = open('data.txt')
 
+
+
+
+
+f = open('data.txt')
 f.readline()
 
 total_data = f.read()
@@ -118,16 +75,14 @@ for i in range(500):
             continue
         test_mesh.append([i, j, extended_data[i][j] * 100])
 
-get_mesh(test_mesh)
+get_mesh1(test_mesh)
 
 
 data = np.array(extended_data)
-
 scaled_data = (255 * data).astype(np.uint8)
-
 gray_image = Image.fromarray(scaled_data)
 
-gray_image.show()
+# gray_image.show()
 
 gray_image.save("gray_image.jpg")
 
