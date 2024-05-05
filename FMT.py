@@ -110,8 +110,8 @@ def max_correlation(imageA, imageB, mask = None):
     target_X = 0
     target_Y = 0
 
-    for coner_X in range(0, height_A - height_B + 1, 10):
-        for coner_Y in range(0, width_A - width_B + 1, 10):
+    for coner_X in range(0, height_A - height_B + 1, 5):
+        for coner_Y in range(0, width_A - width_B + 1, 5):
             current_correlation = compare_images_fft(imageA[coner_X : coner_X + height_B, coner_Y : coner_Y + width_B], imageB, mask)
             # print(current_correlation)
             # print(current_correlation)
@@ -134,10 +134,10 @@ def max_correlation(imageA, imageB, mask = None):
     return [max_score, target_X, target_Y, angle]
 
 # Load images
-imageA = cv2.imread('A.jpg')
-imageB = cv2.imread('C.jpg')
+imageA = cv2.imread('./images/A.jpg')
+imageB = cv2.imread('./images/C.jpg')
 
-imageB = add_erased_part(imageB)
+# imageB = add_erased_part(imageB)
 
 mask = create_mask(imageB)
 # mask = None

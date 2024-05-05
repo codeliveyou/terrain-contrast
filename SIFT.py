@@ -47,8 +47,8 @@ def compare(imageA, imageB):
     cv2.destroyAllWindows()
 
 # Load images and ensure they are in the correct format
-imageA = cv2.imread('D.jpg')
-imageB = cv2.imread('A.jpg')
+imageA = cv2.imread('./images/D.jpg')
+imageB = cv2.imread('./images/A.jpg')
 
 if imageA is None or imageB is None:
     raise ValueError("One or both images did not load. Check the file paths.")

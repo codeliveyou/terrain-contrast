@@ -11,7 +11,8 @@ def get_mesh1(data):
 
     surface = point_cloud.delaunay_2d()
 
-    surface.plot(show_edges=True)
+    return surface
+    # surface.plot(show_edges=True)
 
 
 def get_mesh2(data):
@@ -36,5 +37,7 @@ def get_mesh2(data):
 
     filtered_mesh = filter_mesh_by_density(mesh, densities, 0.01)
 
-    o3d.visualization.draw_geometries([filtered_mesh])
+    return filtered_mesh
+
+    # o3d.visualization.draw_geometries([filtered_mesh])
 
