@@ -5,7 +5,6 @@ import trimesh
 from ipygany import PolyMesh, Scene
 from scipy.interpolate import griddata
 
-
 from MeshFunctions import *
 from HOG import *
 
@@ -16,7 +15,6 @@ def show_tri_mesh(tri_mesh):
     plotter.add_mesh(tri_mesh, show_edges=True, color='lightblue')
     plotter.add_axes()
     plotter.show()
-
 
 def convert_data_into_2d_matrix(total_data, height, width):
 

@@ -1,4 +1,4 @@
-from classes import point
+from Classes import point
 import math
 
 
