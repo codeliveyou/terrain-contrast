@@ -1,9 +1,6 @@
 from Classes import point
 import math
 
-
-
-
 import numpy as np
 import open3d as o3d
 import pyvista as pv
@@ -24,7 +21,6 @@ def get_mesh1(data):
 def get_mesh2(data):
     points = np.array(data)
 
-    
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points)
 
@@ -46,26 +42,3 @@ def get_mesh2(data):
     return filtered_mesh
 
     # o3d.visualization.draw_geometries([filtered_mesh])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
