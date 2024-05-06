@@ -74,21 +74,12 @@ def mesh_into_height_map(mesh, x_min, x_max, y_min, y_max, x_resolution, y_resol
     vertices = mesh.vertices
     x_range = np.linspace(x_min, x_max, num=x_resolution)
     y_range = np.linspace(y_min, y_max, num=y_resolution)
+
     x_grid, y_grid = np.meshgrid(x_range, y_range)
-
     z_values = griddata(vertices[:, :2], vertices[:, 2], (x_grid, y_grid), method='linear')
-
     z_values_filled = np.nan_to_num(z_values, nan=np.nanmin(z_values))
 
     return [list(z_values_filled[i]) for i in range(len(z_values_filled) - 1, -1, -1)]
-
-    # plt.figure(figsize=(10, 8))
-    # plt.contourf(x_grid, y_grid, z_values_filled, levels=50, cmap='gray')
-    # plt.colorbar(label='Height')
-    # plt.title('Height Map of Mesh Surface')
-    # plt.xlabel('X Coordinate')
-    # plt.ylabel('Y Coordinate')
-    # plt.show()
 
 def pv_mesh_into_tri_mesh(pv_mesh):
     faces_as_array = pv_mesh.faces.reshape((pv_mesh.n_cells, 4))[:, 1:]
