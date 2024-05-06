@@ -1,7 +1,7 @@
 import cv2
 
 # Load images
-large_map = cv2.imread('large_map.jpg', cv2.IMREAD_GRAYSCALE)
+large_map = cv2.imread('./Images/map_gray_image.jpg', cv2.IMREAD_GRAYSCALE)
 map_fragment = cv2.imread('map_fragment.jpg', cv2.IMREAD_GRAYSCALE)
 
 # Initialize ORB detector
