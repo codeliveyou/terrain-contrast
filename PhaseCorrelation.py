@@ -19,3 +19,4 @@ y, x = np.unravel_index(np.argmax(np.abs(correlation)), correlation.shape)
 
 # Translate point
 print("Translation vector:", x, y)
+
