@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 
 # Load images
-large_map = cv2.imread('large_map.jpg', cv2.IMREAD_GRAYSCALE)
-map_fragment = cv2.imread('map_fragment.jpg', cv2.IMREAD_GRAYSCALE)
+large_map = cv2.imread('./Images/map_gray_image.jpg', cv2.IMREAD_GRAYSCALE)
+map_fragment = cv2.imread('Images/t_gray_image.jpg', cv2.IMREAD_GRAYSCALE)
 
 # Apply FFT
 f1 = np.fft.fft2(large_map)

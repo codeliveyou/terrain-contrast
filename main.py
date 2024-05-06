@@ -1,8 +1,6 @@
 from PIL import Image
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import trimesh
-from ipygany import PolyMesh, Scene
 from scipy.interpolate import griddata
 
 from MeshFunctions import *
@@ -76,21 +74,12 @@ def mesh_into_height_map(mesh, x_min, x_max, y_min, y_max, x_resolution, y_resol
     vertices = mesh.vertices
     x_range = np.linspace(x_min, x_max, num=x_resolution)
     y_range = np.linspace(y_min, y_max, num=y_resolution)
+
     x_grid, y_grid = np.meshgrid(x_range, y_range)
-
     z_values = griddata(vertices[:, :2], vertices[:, 2], (x_grid, y_grid), method='linear')
-
     z_values_filled = np.nan_to_num(z_values, nan=np.nanmin(z_values))
 
     return [list(z_values_filled[i]) for i in range(len(z_values_filled) - 1, -1, -1)]
-
-    # plt.figure(figsize=(10, 8))
-    # plt.contourf(x_grid, y_grid, z_values_filled, levels=50, cmap='gray')
-    # plt.colorbar(label='Height')
-    # plt.title('Height Map of Mesh Surface')
-    # plt.xlabel('X Coordinate')
-    # plt.ylabel('Y Coordinate')
-    # plt.show()
 
 def pv_mesh_into_tri_mesh(pv_mesh):
     faces_as_array = pv_mesh.faces.reshape((pv_mesh.n_cells, 4))[:, 1:]
@@ -102,10 +91,6 @@ def read_cluster():
     target_y = np.load('./Target Data/y.npy')
     target_z = np.load('./Target Data/z.npy')
     target_len = len(target_x)
-
-    print(target_x)
-    print(target_y)
-    print(target_z)
 
     target_points = []
 
@@ -134,10 +119,9 @@ def height_map_into_gray_image(map_data, min_height, max_height):
 def point_cluster_into_height_map(points):
     mesh = GetMeshByPyvista(points)
     tri_mesh = pv_mesh_into_tri_mesh(mesh)
-    show_3d_cluster(points) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # show_3d_cluster(points) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # mesh.plot(show_edges=True) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # show_tri_mesh(tri_mesh) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+    
     x_min = min(p[0] for p in points)
     x_max = max(p[0] for p in points)
     y_min = min(p[1] for p in points)
@@ -159,8 +143,8 @@ def confident_score(imageA, imageB):
     target_X = 0
     target_Y = 0
 
-    for coner_X in range(0, height_A - height_B + 1, 50):
-        for coner_Y in range(0, width_A - width_B + 1, 50):
+    for coner_X in range(0, height_A - height_B + 1, 200):
+        for coner_Y in range(0, width_A - width_B + 1, 200):
             current_correlation = compare_hog_features(imageA[coner_X : coner_X + height_B, coner_Y : coner_Y + width_B], imageB)
             # print(current_correlation)
             if current_correlation > max_score:
@@ -183,34 +167,35 @@ def confident_score(imageA, imageB):
 
 def main():
     # Map Part
-    # height, width = 1000, 1600
-    # map_data = read_map_data("./Map Data/data.txt", height, width)
+    height, width = 1000, 1600
+    map_data = read_map_data("./Map Data/data.txt", height, width)
 
-    # min_height = np.min(map_data)
-    # max_height = np.max(map_data)
+    min_height = np.min(map_data)
+    max_height = np.max(map_data)
 
     # Target Part
     target_points = read_cluster()
-    # target_map = point_cluster_into_height_map(target_points)
-    # t_min_height = np.min(target_map)
-    # t_max_height = np.max(target_map)
+    target_map = point_cluster_into_height_map(target_points)
+    t_min_height = np.min(target_map)
+    t_max_height = np.max(target_map)
 
     # print(t_min_height, t_max_height)
 
     # Comparing part
-    # min_height = min(min_height, t_min_height)
-    # max_height = max(max_height, t_max_height)
-    # map_gray_image = height_map_into_gray_image(map_data, min_height, max_height)
-    # t_gray_image = height_map_into_gray_image(target_map, min_height, max_height)
-    # t_gray_image.save("./Images/t_gray_image.jpg")
-    
-    # # map_gray_image.show() #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # t_gray_image.show() #show_gray_image(t_gray_image) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # map_gray_image.save("./Images/map_gray_image.jpg")
-    
-    # imageA = cv2.imread("./Images/map_gray_image.jpg")
-    # imageB = cv2.imread("./Images/t_gray_image.jpg")
-    # max_score, target_X, target_Y = confident_score(imageA, imageB)
-    # print("Maximum confident score is : " + str(max_score), "Target position is ", target_X, target_Y)
+    min_height = min(min_height, t_min_height)
+    max_height = max(max_height, t_max_height)
+
+    map_gray_image = height_map_into_gray_image(map_data, min_height, max_height)
+    t_gray_image = height_map_into_gray_image(target_map, min_height, max_height)
+
+    # map_gray_image.show() #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # t_gray_image.show() #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    t_gray_image.save("./Images/t_gray_image.jpg")
+    map_gray_image.save("./Images/map_gray_image.jpg")
+
+    imageA = cv2.imread("./Images/map_gray_image.jpg")
+    imageB = cv2.imread("./Images/t_gray_image.jpg")
+    max_score, target_X, target_Y = confident_score(imageA, imageB)
+    print("Maximum confident score is : " + str(max_score), "Target position is ", target_X, target_Y)
 
 main()
