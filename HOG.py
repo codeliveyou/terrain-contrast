@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 from skimage.feature import hog
 from scipy.spatial.distance import cosine
 import matplotlib.pyplot as plt
@@ -28,10 +27,3 @@ def compare_hog_features(imageA, imageB):
 
     similarity = 1 - cosine(hogA, hogB)
     return similarity
-
-imageA = cv2.imread('./images/A.jpg')
-imageB = cv2.imread('./images/B.jpg')
-
-
-similarity_score = compare_hog_features(imageA, imageB)
-print(f"HOG Similarity Score: {similarity_score}")

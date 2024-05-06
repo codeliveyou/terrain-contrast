@@ -1,6 +1,6 @@
 
-LA = "39°51'12.27"
-LO = "105°14'6.60"
+LA = " 39°49'32.13"
+LO = "105°18'1.33"
 
 latitude_deg = float(LA.split('°')[0])
 latitude_min = float(LA.split('°')[1].split("'")[0])
