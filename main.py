@@ -3,8 +3,12 @@ import matplotlib.pyplot as plt
 import trimesh
 from scipy.interpolate import griddata
 
+from SARPN.inf import load_sarpn_model, load_sarpn_transform, get_sarpn_output
+from pointcloud import get_pointcloud
 from MeshFunctions import *
 from HOG import *
+from Classes import *
+from Track import earth_R, aircraft
 
 def show_tri_mesh(tri_mesh):
     # print("Number of cells in the mesh:", tri_mesh.vertices)
@@ -119,8 +123,8 @@ def height_map_into_gray_image(map_data, min_height, max_height):
 def point_cluster_into_height_map(points):
     mesh = GetMeshByPyvista(points)
     tri_mesh = pv_mesh_into_tri_mesh(mesh)
-    # show_3d_cluster(points) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # mesh.plot(show_edges=True) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    show_3d_cluster(points) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # show_tri_mesh(mesh) #.plot(show_edges=True) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     
     x_min = min(p[0] for p in points)
     x_max = max(p[0] for p in points)
@@ -130,9 +134,10 @@ def point_cluster_into_height_map(points):
     y_resolution = int(round((y_max - y_min) / 5))
     
     target_height_map = mesh_into_height_map(tri_mesh, x_min, x_max, y_min, y_max, x_resolution, y_resolution)
-    return target_height_map
 
-def confident_score(imageA, imageB):
+    return target_height_map, point2(x_min, y_max)
+
+def confident_score(imageA, imageB, ind = 0):
     max_score = 0
     height_A = imageA.shape[0]
     width_A = imageA.shape[1]
@@ -143,8 +148,8 @@ def confident_score(imageA, imageB):
     target_X = 0
     target_Y = 0
 
-    for coner_X in range(0, height_A - height_B + 1, 200):
-        for coner_Y in range(0, width_A - width_B + 1, 200):
+    for coner_X in range(0, height_A - height_B + 1, 100):
+        for coner_Y in range(0, width_A - width_B + 1, 100):
             current_correlation = compare_hog_features(imageA[coner_X : coner_X + height_B, coner_Y : coner_Y + width_B], imageB)
             # print(current_correlation)
             if current_correlation > max_score:
@@ -161,11 +166,39 @@ def confident_score(imageA, imageB):
         for i in range(5):
             imageA[target_X + i - 2][y] = 0
             imageA[target_X + height_B + i - 2][y] = 0
-
-    show_image(imageA) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # show_image(imageA) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    cv2.imwrite(F"./Images/result{ind}.jpg", imageA)
     return [max_score, target_X, target_Y]
 
-def main():
+def get_target_area(current_N, current_E, azimuth):
+    # print(current_N, current_E, azimuth)
+    LB = point2().E_from_angle(azimuth + pi / 2) * 1000
+    # print('LB: ', LB, point2())
+    RB = point2() - LB
+    LT = LB - LB.conj() * 2
+    RT = RB + RB.conj() * 2
+    LTP = point2(min([LB.x, RB.x, LT.x, RT.x]), max([LB.y, RB.y, LT.y, RT.y]))
+    RBP = point2(max([LB.x, RB.x, LT.x, RT.x]), min([LB.y, RB.y, LT.y, RT.y]))
+
+    # LT_aircraft = aircraft(current_N, current_E)
+    # LT_aircraft.set_direction(0, azimuth)
+    # LT_aircraft.position = point(LTP.x, LTP.y, 0)
+    # LT_aircraft.update_NE()
+
+    # RB_aircraft = aircraft(current_N, current_E)
+    # RB_aircraft.set_direction(0, azimuth)
+    # RB_aircraft.position = point(RBP.x, RBP.y, 0)
+    # RB_aircraft.update_NE()
+
+    LT_N = current_N + (LTP.y / earth_R) / pi * 180
+    LT_E = current_E + (LTP.x / (earth_R * math.cos(current_N / 180 * pi))) / pi * 180
+    
+    RB_N = current_N + (RBP.y / earth_R) / pi * 180
+    RB_E = current_E + (RBP.x / (earth_R * math.cos(current_N / 180 * pi))) / pi * 180
+    
+    return [[LT_N, LT_E], [RB_N, RB_E]]
+
+def modify_part():
     # Map Part
     height, width = 1000, 1600
     map_data = read_map_data("./Map Data/data.txt", height, width)
@@ -173,17 +206,11 @@ def main():
     min_height = np.min(map_data)
     max_height = np.max(map_data)
 
+
+
     # Target Part
     target_points = read_cluster()
-    target_map = point_cluster_into_height_map(target_points)
-    t_min_height = np.min(target_map)
-    t_max_height = np.max(target_map)
-
-    # print(t_min_height, t_max_height)
-
-    # Comparing part
-    min_height = min(min_height, t_min_height)
-    max_height = max(max_height, t_max_height)
+    target_map, _ = point_cluster_into_height_map(target_points)
 
     map_gray_image = height_map_into_gray_image(map_data, min_height, max_height)
     t_gray_image = height_map_into_gray_image(target_map, min_height, max_height)
@@ -197,5 +224,125 @@ def main():
     imageB = cv2.imread("./Images/t_gray_image.jpg")
     max_score, target_X, target_Y = confident_score(imageA, imageB)
     print("Maximum confident score is : " + str(max_score), "Target position is ", target_X, target_Y)
+
+def get_cluster(model, transform, image_path, current_height, inclination_angle):
+    scale = (604, 456)
+    depth_array = get_sarpn_output(model, transform, image_path, scale)
+    x,y,z=get_pointcloud(depth_array)
+    lx = list(x)
+    ly = list(y)
+    lz = list(z)
+    return [[lx[i], ly[i], lz[i]] for i in range(len(lx))]
+
+def test_part():
+    # Map Part
+    height, width = 1000, 1600
+    max_N = 39.865277778
+    min_E = -105.333330278
+    min_N = 39.820322778
+    max_E = -105.239611111
+    map_data = read_map_data("./Map Data/data.txt", height, width)
+
+    min_height = np.min(map_data)
+    max_height = np.max(map_data)
+    
+    scale = (604, 456)
+
+    model = load_sarpn_model('./SARPN_checkpoints_50.pth.tar')
+    transform = load_sarpn_transform(scale)
+
+    drone_positions = []
+    drone_real_positions = []
+
+    # Target Part
+    for i in range(0, 10):
+        print(f'INFO: loading {i} image..')
+        with open(F"./Images/info_{i}.txt", "r") as file:
+            status = file.readline().replace(",", "").split(' ')
+            current_E = float(status[0])
+            current_N = float(status[1])
+            current_H = float(status[2])
+            drone_real_positions.append([current_N, current_E])
+
+            status = file.readline().replace(",", "").split(' ')
+            inclination_degree = float(status[0])
+            azimuth_degree = float(status[1])
+        
+        azimuth = - (azimuth_degree / 180 * pi - pi / 2)
+        inclination_angle = - (inclination_degree / 180 * pi)
+
+        # target_points = get_cluster(model, transform, F"./Images/image_{i}.jpg", current_H, inclination_angle)
+
+        if len(target_points) == 0:
+            print("XXXXXXXXXXXXXXXXXXXXX")
+            return
+
+        target_LT, target_RB = get_target_area(current_N, current_E, azimuth)
+
+        LT_x = round((target_LT[0] - max_N) / (min_N - max_N) * height) - 120
+        LT_y = round((target_LT[1] - min_E) / (max_E - min_E) * width) - 120
+
+        RB_x = round((target_RB[0] - max_N) / (min_N - max_N) * height) + 120
+        RB_y = round((target_RB[1] - min_E) / (max_E - min_E) * width) + 120
+
+        if LT_x < 0:
+            RB_x += abs(LT_x)
+            LT_x = 0
+        if RB_x > height:
+            LT_x -= RB_x - height
+            RB_x = height
+        if LT_y < 0:
+            RB_y += abs(LT_y)
+            LT_y = 0
+        if RB_y > width:
+            LT_y -= RB_y - width
+            RB_y = width
+
+        # print(min_N, max_N, min_E, max_E)
+        # print("------>>        ", target_LT, target_RB)
+        # print("------>>        ", LT_x, LT_y, RB_x, RB_y)
+
+        # print(len(target_points), len(target_points[0]))
+
+        target_map, LT = point_cluster_into_height_map(target_points)
+        # print(len(target_map), len(target_map[0]))
+
+        search_map_data = [map_data[x][LT_y : RB_y] for x in range(LT_x, RB_x)]
+        search_map_gray_image = height_map_into_gray_image(search_map_data, min_height, max_height)
+        t_gray_image = height_map_into_gray_image(target_map, min_height, max_height)
+
+        # search_map_gray_image.show() #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # t_gray_image.show() #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        search_map_gray_image.save(F"./Images/search_map_gray_image{i}.jpg")
+        t_gray_image.save(F"./Images/t_gray_image{i}.jpg")
+
+        imageA = cv2.imread(F"./Images/search_map_gray_image{i}.jpg")
+        imageB = cv2.imread(F"./Images/t_gray_image{i}.jpg")
+        max_score, target_X, target_Y = confident_score(imageA, imageB, i)
+        target_X += LT_x
+        target_Y += LT_y
+
+        drone_N = max_N - (max_N - min_N) / height * target_X
+        drone_E = min_E + (max_E - min_E) / width * target_Y
+
+
+        LT_N = drone_N - (LT.y / earth_R) / pi * 180
+        LT_E = drone_E - (LT.x / (earth_R * math.cos(drone_N / 180 * pi))) / pi * 180
+
+        drone_positions.append([LT_N - current_N, LT_E - current_E])
+
+        print(F"Maximum confident score of image{i} is : " + str(max_score), "Target position is ", target_X, target_Y)
+    
+    print('\n'.join([(str(d[0]) + ',' + str(d[1])) for d in drone_positions]))
+    # print("--------------------------------------------")
+    # print('\n'.join([(str(d[0]) + ',' + str(d[1])) for d in drone_real_positions]))
+    
+
+def main():
+
+    # modify_part()
+    test_part()
+
+    
 
 main()
