@@ -2,7 +2,7 @@
 from Classes import point
 import math
 
-earth_R = 6730000
+earth_R = 6378000
 
 class aircraft:
     def __init__(self, N, E):

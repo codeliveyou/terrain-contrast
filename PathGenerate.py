@@ -107,7 +107,7 @@ out.write(str(number_of_points) + '\n')
 for i in range(number_of_points):
     radian = -(math.atan2(dy_points[i], dx_points[i]) - math.pi / 2)
     if radian < 0:
-        radian += math.pi / 2
+        radian += math.pi * 2
     azimuth = radian / math.pi * 180
     N, E = get(x_points[i], y_points[i])
     out.write(' '.join([str(N), str(E), '0', 
