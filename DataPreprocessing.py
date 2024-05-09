@@ -63,7 +63,7 @@ def txt2hmap(coordinates, txt_path):
     grid = []
     st, ed = 0, 0
     min_N, max_N, min_E, max_E = 0, 0, 0, 0
-    Es = []
+    # Es = []
     while st < len(cells):
         ed = st
         while ed < len(cells) and cells[st][0] == cells[ed][0]:
@@ -71,14 +71,14 @@ def txt2hmap(coordinates, txt_path):
             max_N = max(cells[ed][0], max_N)
             min_E = min(cells[ed][1], min_E)
             max_E = max(cells[ed][1], max_E)
-            Es.append(cells[ed][1])
+            # Es.append(cells[ed][1])
             ed += 1
         grid.append(sorted(cells[st : ed], key = lambda x : x[1]))
         st = ed
-    Es = sorted(Es)
-    print((Es[-1] - Es[0]))
-    print(Es[0], Es[-1])
-    exit(0)
+    # Es = sorted(Es)
+    # print((Es[-1] - Es[0]))
+    # print(Es[0], Es[-1])
+    # exit(0)
     # mx_E = 0
     # for i in range(1, len(Es)):
     #     mx_E = max(mx_E, Es[i] - Es[i - 1])
@@ -88,6 +88,7 @@ def txt2hmap(coordinates, txt_path):
     earth_R = 6378000
     delta_N = 5 * 180 / earth_R / math.pi
     delta_E = 5 * 180 / (math.cos(cur_N / 180 * math.pi) * earth_R) / math.pi
+    # print((coordinates[2] - coordinates[0]) / delta_N, (coordinates[3] - coordinates[1]) / delta_E)
     # print((max_N - min_N) / delta_N, (max_E - min_E) / delta_E)
     # exit(0)
     # print(delta_N, delta_E)
