@@ -1,5 +1,32 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import random
+import time
+
+start_time = time.time()
+
+arr = [[random.randint(0, 100000), random.randint(0, 100000)] for _ in range(100000)]
+
+def distance(x, y, target_x, target_y):
+    return abs(target_x - x) + abs(target_y - y)
+
+target_x = random.randint(0, 100000)
+target_y = random.randint(0, 100000)
+
+def find_nearest_position(arr, target_x, target_y):
+    min_distance = -1
+    ans_x, ans_y = 0, 0
+    for cell in arr:
+        cur_distance = distance(cell[0], cell[1], target_x, target_y)
+        if min_distance == -1 or cur_distance < min_distance:
+            min_distance = cur_distance
+            ans_x, ans_y = cell
+    return [ans_x, ans_y, min_distance]
+
+print(find_nearest_position(arr, target_x, target_y))
+print(time.time() - start_time)
+
+exit(0)
 
 
 def draw_path(

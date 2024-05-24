@@ -140,7 +140,7 @@ def point_cluster_into_height_map(points):
     
     mesh = GetMeshByPyvista(points)
     tri_mesh = pv_mesh_into_tri_mesh(mesh)
-    # show_tri_mesh(mesh) #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # show_tri_mesh(mesh)#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     x_min = min(p[0] for p in points)
     x_max = max(p[0] for p in points)
@@ -324,6 +324,9 @@ def test_part():
         current_H = 600
         inclination_degree = float(input_drone_data[i][3])
         azimuth_degree = float(input_drone_data[i][4])
+
+        # print(current_N, current_E, inclination_degree, azimuth_degree)
+        # exit(0)
         
         azimuth = azimuth_degree / 180 * pi
         inclination_angle = inclination_degree / 180 * pi
