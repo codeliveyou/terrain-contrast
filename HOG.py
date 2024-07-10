@@ -14,7 +14,6 @@ def calculate_hog_features(image, orientations=9, pixels_per_cell=(8, 8), cells_
                         cells_per_block=cells_per_block, visualize=True)
     return fd
 
-
 def compare_hog_features(imageA, imageB):
     grayA = cv2.cvtColor(imageA, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
